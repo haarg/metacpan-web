@@ -27,8 +27,8 @@
         <%-
             FOREACH profile IN author.profile.sort('name');
             IF profiles.${profile.name} %>
-        <a rel="me" href="<% profiles.${profile.name}.url.replace('%s', profile.id) %>" target="_blank" title="<% profile.name %> - <% profile.id%>">
-        <img src="/static/images/profile/<% profile.name %>.png" width=16 height=16 alt="<% profile.name %>">
+        <%- %><a rel="me" href="<% profiles.${profile.name}.url.replace('%s', profile.id) %>" target="_blank" title="<% profile.name %> - <% profile.id%>" class="profile profile-<% profile.name %>">
+          <% profile.name %>
         </a>
         <% END; END %>
     </div>
@@ -36,7 +36,7 @@
     <% IF author.country || author.city || author.region %>
     <li class="nav-header">Location</li>
     <% IF author.country %>
-    <img src="/static/images/flag/<% author.country.lower %>.png" alt="<% author_country_name %>" title="<% author_country_name %>" width=16 height=11> &nbsp;
+    <span class="flag flag-<% author.country.lower %>" title="<% author_country_name %>"><% author_country_name %></span> &nbsp;
     <%- END %>
     <%- author.city; %><% IF author.city && author.region %>, <% END %><%- author.region %><br>
     <% END %>
