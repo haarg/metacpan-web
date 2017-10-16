@@ -140,6 +140,7 @@ sub normalize {
             author       => $data->{author},
             contributors => $data->{contributors},
             irc          => $self->groom_irc( $data->{release}{release} ),
+            repository   => $self->normalize_repo( $data->{release}{release} ),
             issues       => $self->normalize_issues(
                 $data->{release}{release},
                 $data->{distribution}
@@ -270,6 +271,19 @@ sub normalize_issue_url {
     }{https://rt.cpan.org/Dist/Display.html?Name=}x;
 
     return $url;
+}
+
+sub normalize_repo {
+    my ( $self, $release ) = @_;
+    my %repo = %{ ( $release->{resources} || {} )->{repository} || return {} };
+    $repo{type} ||= 'git'
+        if $repo{url} =~ /git/;
+    my $url = $repo{web} || $repo{url}
+        or return {};
+    $url =~ s{^(?:git|https?)://(github\.com/)}{https://$1}
+        && $url =~ s/\.git//;
+    $repo{web} = $url;
+    return \%repo;
 }
 
 __PACKAGE__->meta->make_immutable;
