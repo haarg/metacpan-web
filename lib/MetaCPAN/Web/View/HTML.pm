@@ -9,14 +9,23 @@ use List::Util       ();
 use Cpanel::JSON::XS ();
 use Gravatar::URL;
 use Regexp::Common qw(time);
-use Template::Plugin::DateTime;
 use Template::Plugin::JSON;
-use Template::Plugin::Markdown;
+use Text::MultiMarkdown 'markdown'
 use Template::Plugin::Number::Format;
 use Template::Plugin::Page;
 use Text::Pluralize ();
 use URI;
 use URI::QueryParam;
+use POSIX::strftime::Compiler;
+
+sub COMPONENT {
+    my ($class, $app, $args) = @_;
+    $args = $class->merge_config_hashes($class->config, $args);
+    $args->{FILTERS} = {
+        multimarkdown => [sub { my (undef, $opts) = @_; sub { markdown($_[0], $opts) }, 1],
+    };
+    return $class->new($app, $args);
+}
 
 sub parse_datetime {
     my $date = shift;
@@ -66,6 +75,13 @@ sub common_date_format {
     my $dt   = parse_datetime($date);
     return sprintf( '%04d-%02d-%02d', @$dt{qw(year month day)} );
 }
+
+my %formats;
+Template::Alloy->define_vmethod( 'text', 'strftime' => sub {
+    my ($epoch, $format) = @_;
+    $formats{$format} ||= POSIX::strftime::Compiler->new($format);
+    $format->to_string(localtime($epoch));
+});
 
 Template::Alloy->define_vmethod( 'text', dt => \&parse_datetime );
 
