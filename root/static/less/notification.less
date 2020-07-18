@@ -1,47 +1,35 @@
-#metacpan_notification {
-    margin-bottom: 15px;
-    overflow: auto;
-    position: relative;
+.content {
+    .alert {
+        overflow: auto;
+    }
 }
 
-.notification-toggle-checkbox {
-    display: none;
+.takeover-alert {
+    h2 {
+        font-weight: bold;
+        font-size: 110%;
+        margin-top: 0;
+    }
 }
 
-.notification-toggle-checkbox:checked ~ #metacpan_notification {
-    max-height: 0;
-    border: none;
-    min-height: 0;
-    padding: 0;
-    margin: 0;
-    transition: min-height 0.5s cubic-bezier(0, 1, 0.5, 1);
+.takeover-alert(@bg) {
+    .alert-variant(
+        @bg;
+        darken(spin(@bg, -10), 5%);
+        darken(@bg, 69%);
+    );
 }
 
-label.remove-notification {
-    position: absolute;
-    right: 5px;
-    top: 5px;
-    cursor: pointer;
+.takeover-needhelp {
+    .takeover-alert(#d7f5dd);
 }
 
-#metacpan_notification h2 {
-    display: block;
-    font-weight: bold;
-    font-size: 100%;
-    margin: 0;
-    line-height: inherit;
+.takeover-adoptme {
+    .takeover-alert(#f5efd7);
 }
 
-.notify-NEEDHELP {
-    background: #d7f5dd;
-}
-
-.notify-ADOPTME {
-    background: #f5efd7;
-}
-
-.notify-HANDOFF {
-    background: #d7e1f5;
+.takeover-handoff {
+    .takeover-alert(#d7e1f5);
 }
 
 .notify-DEPRECATED,
