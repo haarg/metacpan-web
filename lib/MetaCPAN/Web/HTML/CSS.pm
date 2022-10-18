@@ -54,11 +54,20 @@ my $color_re = qr{
 (?<color>
     [a-zA-Z]+
 |
-    \#[0-9a-zA-Z]{1,6}
+    \#
+    (?:
+        [0-9a-fA-F]{3}
+    |
+        [0-9a-fA-F]{4}
+    |
+        [0-9a-fA-F]{6}
+    |
+        [0-9a-fA-F]{8}
+    )
 |
-    rgb\(\s*[0-9]+\s*,\s*[0-9]+\s*,\s*[0-9]+\s*\)
+    (?:rgba?|hsla?)\(\s*[0-9]+\s*(?:,\s*[0-9]+\s*){2,3}\)
 |
-    rgba\(\s*[0-9]+\s*,\s*[0-9]+\s*,\s*[0-9]+\s*,\s*[0-9]+\s*\)
+    (?:rgba?|hsla?|hwb)\(\s*[0-9]+(?:\s+[0-9]+){2}(?:\s*\s*[0-9]+\s*(?:,\s*[0-9]+\s*)?\)
 )
 }x;
 
@@ -72,19 +81,18 @@ my $unit_re = qr{
 }x;
 
 my %unit_factor = (
-    px  => 1,
-    cm  => 96/2.54,
-    mm  => 96/2.54/10,
-    in  => 96,
-    pc  => 16,
-    pt  => 4/3,
+    px => 1,
+    cm => 96 / 2.54,
+    mm => 96 / 2.54 / 10,
+    in => 96,
+    pc => 16,
+    pt => 4 / 3,
 
     # estimate based on common font sizes, close enough for our purposes
     ch  => 8,
     em  => 14.3,
     ex  => 7.5,
     rem => 10,
-
 );
 
 sub map_units {
@@ -95,14 +103,14 @@ sub map_units {
     return 0
         if $in == 0;
 
-    if (my $factor = $unit_factor{$unit}) {
+    if ( my $factor = $unit_factor{$unit} ) {
         return $in * $factor;
     }
 
     return undef;
 }
 
-my ($border_style_re) = map qr{$_}, join('|', qw(
+my ($border_style_re) = map qr{$_}, join '|', qw(
     none
     hidden
     dotted
@@ -113,7 +121,7 @@ my ($border_style_re) = map qr{$_}, join('|', qw(
     ridge
     inset
     outset
-));
+);
 
 my $border_element_re = qr{
     $color_re
@@ -123,54 +131,52 @@ my $border_element_re = qr{
     $border_style_re
 }x;
 
-my ($white_space_re) = map qr{$_}, join('|', qw(
+my ($white_space_re) = map qr{$_}, join '|', qw(
     normal
     nowrap
     pre
     pre-wrap
     pre-line
-));
+);
 
 my $units_re = qr/$unit_re(?:\s+$unit_re){0,3}/;
 
 my %filter = (
-    'color'             => $color_re,
-    'background'        => $color_re,
-    'background-color'  => $color_re,
-    'border'            => qr{$border_element_re(?:\s+$border_element_re)*},
-    'border-top-style'  => $border_style_re,
-    'border-top-width'  => $unit_re,
-    'border-top-color'  => $color_re,
-    'border-radius'     => qr{$units_re(?:\s+/\s+$units_re)?},
-    'white-space'       => $white_space_re,
+    'color'            => $color_re,
+    'background'       => $color_re,
+    'background-color' => $color_re,
+    'border'           => qr{$border_element_re(?:\s+$border_element_re)*},
+    'border-top-style' => $border_style_re,
+    'border-top-width' => $unit_re,
+    'border-top-color' => $color_re,
+    'border-radius'    => qr{$units_re(?:\s+/\s+$units_re)?},
+    'white-space'      => $white_space_re,
 );
 
 for my $sub (qw(style width color)) {
     my $re = $filter{"border-top-$sub"};
-    $filter{"border-$sub"} = qr{$re(?:\s+$re){0,3}};
-    $filter{"border-$_-$sub"} = $re
-        for qw(right bottom left);
+    $filter{"border-$sub"}    = qr{$re(?:\s+$re){0,3}};
+    $filter{"border-$_-$sub"} = $re for qw(right bottom left);
 }
 
 for my $filter (qw(padding margin)) {
     $filter{$filter} = $units_re;
-    $filter{"$filter-$_"} = $unit_re
-        for qw(top right bottom left);
+    $filter{"$filter-$_"} = $unit_re for qw(top right bottom left);
 }
 
 sub filters {
-    return { %filters };
+    return {%filters};
 }
 
 sub style_parse {
     my ($style) = @_;
     my @rules;
-    while ($style =~ m{
+    while ( $style =~ m{
         (?:\G|;)\s*
         ([\w._-]+)\s*:\s*
         ($value_re)
         \s*(?:;|\z)
-    }xg) {
+    }xg ) {
         push @rules, [ $1, $2 ];
     }
     return \@rules;
@@ -179,22 +185,21 @@ sub style_parse {
 sub style_gen {
     my ($rules) = @_;
     join '; ', map {
-        my ($rule, @values) = @$_;
+        my ( $rule, @values ) = @$_;
         $rule . ': ' . join ' ', @values;
     } @$rules;
 }
 
-
 sub filter_style {
-    my ($style, $filters) = @_;
+    my ( $style, $filters ) = @_;
     $filters ||= \%filter;
     my $rules = style_parse($style);
     @$rules = grep {
-        my ($rule, $value) = @$_;
+        my ( $rule, $value ) = @$_;
         my $filter = $filters->{$rule};
         $filter && $value =~ /\A$filter\z/ && do {
-            if (my $units = $-{unit}) {
-                !grep $_ < 0, grep defined, map map_units($_), @$units;
+            if ( my $units = $-{unit} ) {
+                !grep $_ < 0 || $_ > 50, grep defined, map map_units($_), @$units;
             }
             else {
                 1;
