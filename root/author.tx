@@ -27,7 +27,7 @@
     %%  for $author.website -> $website {
     <li  class="author-item">
         <i class="fas fa-link"></i>
-        <a rel="me noopener nofollow" href="[% $website %]" title="[% $website %]" target="_blank">[% $website.decode_punycode() %]</a>
+        <a rel="me noopener nofollow" href="[% $website %]" title="[% $website %]" target="_blank">[% uri_as_iri($website) %]</a>
     </li>
     %%  } }
     %%  if $author.blog.size() {

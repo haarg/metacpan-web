@@ -151,17 +151,9 @@ sub indexed_by {
     return { map +( $_->{$key} => $_ ), @$array };
 }
 
-sub decode_punycode {
+sub uri_as_iri {
     my ($url_string) = @_;
-    eval {
-        my $uri = URI->new($url_string);
-        if ( !$uri->scheme ) {
-
-            # default to http:// if no scheme in original...
-            $uri = URI->new("http://$url_string");
-        }
-        eval { $uri->ihost } || $uri->host;
-    } || $url_string;
+    eval { URI->new($url_string)->as_iri } || $url_string;
 }
 
 sub slice {
@@ -197,7 +189,7 @@ __PACKAGE__->bridge(
             int
             json
             json_pretty
-            decode_punycode
+            uri_as_iri
             version
             is_url
             length

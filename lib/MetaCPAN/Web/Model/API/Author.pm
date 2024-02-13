@@ -46,6 +46,25 @@ sub _filter_authors {
             $author->{has_display_name}
                 = $author->{display_name} ne ( $author->{pauseid} // '' );
         }
+        if (my $websites = $author->{website}) {
+            $websites = [ $websites ]
+                if !is_arrayref($websites);
+
+            my @websites = map {
+                my $url = $_;
+                my $uri = URI->new($url);
+                my $scheme = $uri->scheme;
+                ($scheme && $scheme eq 'http' || $scheme eq 'https') ? $uri : ();
+            } @$websites;
+
+            if (@websites) {
+                $author->{website} = \@websites;
+            }
+            else {
+                delete $author->{website};
+            }
+        }
+
     }
     return Future->done($data);
 }
